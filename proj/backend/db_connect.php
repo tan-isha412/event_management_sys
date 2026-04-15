@@ -4,8 +4,8 @@
 define('DB_HOST', 'localhost');
 define('DB_PORT', '1521');
 define('DB_SID',  'XE');         
-define('DB_USER', 'system');     
-define('DB_PASS', 'student');    
+define('DB_USER', '<username>');     
+define('DB_PASS', '<password>');    
 
 header('Content-Type: application/json; charset=utf-8');
 header('Access-Control-Allow-Origin: *');
