@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Student Dashboard — Eventive</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+<div id="toast-container"></div>
+
+<div class="layout">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-text">Eventive</div>
+      <div class="logo-sub">Student Portal</div>
+    </div>
+    <div class="sidebar-user">
+      <div class="user-avatar" id="sidebar-avatar">S</div>
+      <div class="user-info">
+        <div class="name" id="sidebar-user-name">Loading…</div>
+        <div class="role" id="sidebar-user-role">Student</div>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Main</div>
+      <button class="nav-item active" id="nav-dashboard" onclick="showSection('dashboard')">
+        <span class="icon">🏠</span> Dashboard
+      </button>
+      <button class="nav-item" id="nav-events" onclick="showSection('events')">
+        <span class="icon">🎫</span> All Events
+      </button>
+      <button class="nav-item" id="nav-recommendations" onclick="showSection('recommendations')">
+        <span class="icon">✨</span> Recommended
+      </button>
+      <button class="nav-item" id="nav-my-events" onclick="showSection('my-events')">
+        <span class="icon">📋</span> My Registrations
+      </button>
+      <button class="nav-item" id="nav-feedback" onclick="showSection('feedback')">
+        <span class="icon">💬</span> Give Feedback
+      </button>
+    </nav>
+    <div class="sidebar-footer">
+      <button class="btn-logout" onclick="logout()">
+        <span>🚪</span> Sign Out
+      </button>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+    <div class="topbar">
+      <button class="btn btn-ghost btn-icon" onclick="toggleSidebar()" style="display:none" id="menu-btn">☰</button>
+      <div class="topbar-title" id="topbar-title">Dashboard</div>
+      <div class="topbar-actions">
+        <div class="topbar-search">
+          <span>🔍</span>
+          <input type="text" id="global-search" placeholder="Search events…" oninput="handleSearch(this.value)">
+        </div>
+      </div>
+    </div>
+
+    <div class="page-content">
+
+      <!-- ===== DASHBOARD SECTION ===== -->
+      <section id="section-dashboard">
+        <div class="stats-grid" id="stats-grid">
+          <div class="stat-card indigo">
+            <div class="stat-icon indigo">🎫</div>
+            <div>
+              <div class="stat-value" id="stat-registered">—</div>
+              <div class="stat-label">Registered Events</div>
+            </div>
+          </div>
+          <div class="stat-card amber">
+            <div class="stat-icon amber">📅</div>
+            <div>
+              <div class="stat-value" id="stat-upcoming">—</div>
+              <div class="stat-label">Upcoming Events</div>
+            </div>
+          </div>
+          <div class="stat-card green">
+            <div class="stat-icon green">✅</div>
+            <div>
+              <div class="stat-value" id="stat-attended">—</div>
+              <div class="stat-label">Events Attended</div>
+            </div>
+          </div>
+          <div class="stat-card cyan">
+            <div class="stat-icon cyan">⭐</div>
+            <div>
+              <div class="stat-value" id="stat-recs">—</div>
+              <div class="stat-label">Recommendations</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">📅 Upcoming Registered Events</div>
+            </div>
+            <div id="upcoming-list">
+              <div class="loading-area"><div class="spinner"></div></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">✨ Top Recommendations</div>
+              <button class="btn btn-ghost btn-sm" onclick="showSection('recommendations')">View All</button>
+            </div>
+            <div id="rec-preview">
+              <div class="loading-area"><div class="spinner"></div></div>
+            </div>
+          </div>
+        </div>
+      </section>
+      
+      <!-- ===== EVENTS SECTION ===== -->
+      <section id="section-events" style="display:none">
+        <div class="filter-bar">
+          <button class="filter-chip active" onclick="filterEvents('', this)">All</button>
+          <button class="filter-chip" onclick="filterEvents('UPCOMING', this)">Upcoming</button>
+          <button class="filter-chip" onclick="filterEvents('ONGOING', this)">Ongoing</button>
+          <button class="filter-chip" onclick="filterEvents('COMPLETED', this)">Completed</button>
+        </div>
+        <div class="events-grid" id="events-grid">
+          <div class="loading-area"><div class="spinner"></div></div>
+        </div>
+      </section>
+
+      <!-- ===== RECOMMENDATIONS SECTION ===== -->
+      <section id="section-recommendations" style="display:none">
+        <div style="margin-bottom:20px">
+          <p style="color:var(--text-secondary);font-size:14px">
+            Events recommended for you based on your interests, department, and activity history.
+          </p>
+        </div>
+        <div id="rec-list">
+          <div class="loading-area"><div class="spinner"></div></div>
+        </div>
+      </section>
+
+      <!-- ===== MY REGISTRATIONS ===== -->
+      <section id="section-my-events" style="display:none">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">My Registered Events</div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Event</th>
+                  <th>Date</th>
+                  <th>Venue</th>
+                  <th>Status</th>
+                  <th>Attendance</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="my-events-tbody">
+                <tr><td colspan="6"><div class="loading-area"><div class="spinner"></div></div></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== FEEDBACK SECTION ===== -->
+      <section id="section-feedback" style="display:none">
+        <div class="card" style="max-width:560px">
+          <div class="card-header">
+            <div class="card-title">💬 Submit Feedback</div>
+          </div>
+          <div class="modal-body" style="padding:0">
+            <div class="form-group">
+              <label class="form-label">Select Event</label>
+              <select id="feedback-event-select" class="form-control">
+                <option value="">Loading your registered events…</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin-top:16px">
+              <label class="form-label">Your Rating</label>
+              <div class="star-rating" id="star-rating-container"></div>
+              <input type="hidden" id="feedback-rating" value="0">
+            </div>
+            <div class="form-group" style="margin-top:16px">
+              <label class="form-label">Comments (Optional)</label>
+              <textarea id="feedback-comments" class="form-control" rows="4"
+                placeholder="Share your experience…"></textarea>
+            </div>
+            <button class="btn btn-primary" onclick="submitFeedback()" style="margin-top:8px">
+              Submit Feedback
+            </button>
+          </div>
+        </div>
+      </section>
+    </div><!-- end page-content -->
+  </main>
+</div>
+
+<!-- EVENT DETAIL MODAL -->
+<div class="modal-overlay" id="event-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-event-title">Event Details</div>
+      <button class="modal-close" onclick="closeModal('event-modal')">✕</button>
+    </div>
+    <div class="modal-body" id="modal-event-body"></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('event-modal')">Close</button>
+      <button class="btn btn-primary" id="modal-register-btn">Register</button>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/javascript/app.js"></script>
+<script>
+  let user = null;
+  let allEvents = [];
+  let myRegistrations = [];
+
+  window.addEventListener('DOMContentLoaded', async () => {
+    user = Session.require('student');
+    if (!user) return;
+    initSidebar();
+    loadDashboard();
+    loadEvents();
+    initStarRating('star-rating-container', 'feedback-rating');
+  });
+
+  async function loadDashboard() {
+
+  const user = JSON.parse(localStorage.getItem("sem_user"));
+
+  if (!user || !user.student_id) {
+    console.error("User missing");
+    return;
+  }
+
+  console.log("USING ID:", user.student_id);
+
+  const [regRes, recRes] = await Promise.all([
+    apiFetch(`my_events.php?student_id=${user.student_id}`),
+    apiFetch(`recommendations.php?student_id=${user.student_id}`)
+  ]);
+
+myRegistrations = regRes.success 
+  ? regRes.registrations.map(normalizeRegistration) 
+  : [];
+    
+
+    const attended = myRegistrations.filter(r => r.ATTENDANCE === 'PRESENT').length;
+    const upcoming = myRegistrations.filter(r => r.EVENT_STATUS === 'UPCOMING').length;
+
+    document.getElementById('stat-registered').textContent = myRegistrations.length;
+    document.getElementById('stat-upcoming').textContent   = upcoming;
+    document.getElementById('stat-attended').textContent   = attended;
+    document.getElementById('stat-recs').textContent       = recRes.count || 0;
+
+    // Upcoming list
+    const upcomingEl = document.getElementById('upcoming-list');
+    const upcoming_events = myRegistrations.filter(r => r.EVENT_STATUS === 'UPCOMING').slice(0, 4);
+    if (upcoming_events.length === 0) {
+      upcomingEl.innerHTML = '<div class="empty-state"><div class="icon">📅</div><p>No upcoming events</p></div>';
+    } else {
+      upcomingEl.innerHTML = upcoming_events.map(r => `
+        <div style="padding:12px 0;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+          <div>
+            <div style="font-weight:600;font-size:14px">${r.EVENT_NAME}</div>
+            <div style="font-size:12px;color:var(--text-muted);margin-top:3px">📍 ${r.VENUE} · ${formatDate(r.EVENT_DATE)}</div>
+          </div>
+          ${statusBadge(r.EVENT_STATUS)}
+        </div>`).join('');
+    }
+
+    // Rec preview
+    const recEl = document.getElementById('rec-preview');
+    const recs = recRes.success ? recRes.recommendations.slice(0, 3) : [];
+    if (recs.length === 0) {
+      recEl.innerHTML = '<div class="empty-state"><div class="icon">✨</div><p>No recommendations yet</p></div>';
+    } else {
+      recEl.innerHTML = recs.map(r => `
+        <div class="rec-card" style="padding:12px 0;border:none;margin:0;border-bottom:1px solid var(--border)">
+          <div>
+            <div style="font-weight:600;font-size:14px">${r.EVENT_NAME || 'Event'}</div>
+            <div style="font-size:12px;color:var(--text-muted);margin-top:3px">Score: ${r.RECOMMENDATION_SCORE || '—'}</div>
+          </div>
+        </div>`).join('');
+    }
+
+    // Populate feedback select
+    const sel = document.getElementById('feedback-event-select');
+    sel.innerHTML = '<option value="">— Select an event —</option>' +
+      myRegistrations.map(r =>
+        `<option value="${r.EVENT_ID}">${r.EVENT_NAME}</option>`
+      ).join('');
+  }
+
+  async function loadEvents(status = '') {
+    const grid = document.getElementById('events-grid');
+    grid.innerHTML = '<div class="loading-area"><div class="spinner"></div></div>';
+
+    const q   = status ? `?status=${status}` : '';
+    const res = await apiFetch(`events.php${q}`);
+
+    allEvents = res.success ? res.events.map(normalizeEvent) : [];
+    renderEvents(allEvents);
+  }
+async function registerEvent(eventId, btn) {
+  const user = Session.get();
+  if (btn) { btn.disabled = true; btn.textContent = '…'; }
+
+  const res = await apiFetch('register.php', {
+    method: 'POST',
+    body: JSON.stringify({
+      student_id: user.student_id,   // see Bug B below
+      event_id: eventId
+    })
+  });
+
+  if (res.success) {
+    showToast(res.message, 'success');
+    if (btn) { btn.textContent = '✓ Registered'; btn.classList.replace('btn-primary','btn-success'); }
+  } else {
+    showToast(res.message || 'Error', 'error');
+    if (btn) { btn.disabled = false; btn.textContent = 'Register'; }
+  }
+}
+
+  function renderEvents(events) {
+    const grid = document.getElementById('events-grid');
+    if (!events || events.length === 0) {
+      grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="icon">🎫</div><h3>No events found</h3></div>';
+      return;
+    }
+    grid.innerHTML = events.map(e => `
+      <div class="event-card">
+        <div class="event-card-header">
+          <div>
+            <div class="event-card-title">${e.EVENT_NAME}</div>
+            <div style="font-size:12px;color:var(--text-muted);margin-top:4px">${e.CATEGORY_NAME || 'General'}</div>
+          </div>
+          ${statusBadge(e.STATUS)}
+        </div>
+        <div class="event-card-body">
+          <div class="event-meta"><span class="icon">📅</span>${formatDate(e.EVENT_DATE)}</div>
+          <div class="event-meta"><span class="icon">📍</span>${e.VENUE}</div>
+          <div class="event-meta"><span class="icon">👤</span>${e.ORGANIZER_NAME}</div>
+          ${e.REGISTRATION_FEE > 0
+            ? `<div class="event-meta" style="color:var(--amber)"><span class="icon">💰</span>₹${e.REGISTRATION_FEE}</div>`
+            : `<div class="event-meta" style="color:var(--green)"><span class="icon">🆓</span>Free Entry</div>`}
+        </div>
+        <div class="event-card-footer">
+          <button class="btn btn-ghost btn-sm" onclick="openEventModal('${e.EVENT_ID}')">Details</button>
+          <button class="btn btn-primary btn-sm" onclick="registerEvent('${e.EVENT_ID}',this)">Register</button>
+        </div>
+      </div>`).join('');
+  }
+
+  function filterEvents(status, btn) {
+    document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+    btn.classList.add('active');
+    loadEvents(status);
+  }
+
+  function handleSearch(q) {
+    if (!allEvents.length) return;
+    const filtered = q
+      ? allEvents.filter(e =>
+          e.EVENT_NAME.toLowerCase().includes(q.toLowerCase()) ||
+          (e.VENUE || '').toLowerCase().includes(q.toLowerCase()))
+      : allEvents;
+    renderEvents(filtered);
+  }
+
+  
+  async function openEventModal(eventId) {
+    openModal('event-modal');
+    document.getElementById('modal-event-body').innerHTML =
+      '<div class="loading-area"><div class="spinner"></div></div>';
+
+    const res = await apiFetch(`events.php?event_id=${eventId}`);
+    const e   = res.event;
+    if (!e) return;
+
+    document.getElementById('modal-event-title').textContent = e.EVENT_NAME;
+    document.getElementById('modal-event-body').innerHTML = `
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          ${statusBadge(e.STATUS)}
+          <span class="badge" style="background:var(--indigo-dim);color:var(--indigo-lt)">${e.CATEGORY_NAME || 'General'}</span>
+        </div>
+        <p style="color:var(--text-secondary);font-size:14px;line-height:1.7">${e.DESCRIPTION || 'No description available.'}</p>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div style="background:var(--bg);border-radius:10px;padding:12px">
+            <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Date</div>
+            <div style="font-size:14px;font-weight:600">${formatDateTime(e.EVENT_DATE)}</div>
+          </div>
+          <div style="background:var(--bg);border-radius:10px;padding:12px">
+            <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Venue</div>
+            <div style="font-size:14px;font-weight:600">${e.VENUE}</div>
+          </div>
+          <div style="background:var(--bg);border-radius:10px;padding:12px">
+            <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Fee</div>
+            <div style="font-size:14px;font-weight:600;color:var(--amber)">${e.REGISTRATION_FEE > 0 ? '₹' + e.REGISTRATION_FEE : 'Free'}</div>
+          </div>
+          <div style="background:var(--bg);border-radius:10px;padding:12px">
+            <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Organizer</div>
+            <div style="font-size:14px;font-weight:600">${e.ORGANIZER_NAME}</div>
+          </div>
+        </div>
+        <div>${capacityBar(e.REG_COUNT || 0, e.MAX_CAPACITY)}</div>
+      </div>`;
+
+    const regBtn = document.getElementById('modal-register-btn');
+    regBtn.onclick = () => { registerEvent(eventId,regBtn); closeModal('event-modal'); };
+  }
+
+  async function loadMyEvents() {
+    const user = Session.get();
+
+if (!user || !user.student_id) {
+  console.error("User not found");
+  return;
+}
+    const res = await apiFetch(`my_events.php?student_id=${user.student_id}`);
+    const tbody = document.getElementById('my-events-tbody');
+
+    if (!res.success || res.registrations.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><div class="icon">📋</div><h3>No registrations yet</h3></div></td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = res.registrations.map(normalizeRegistration).map(r => `
+      <tr>
+        <td><strong>${r.EVENT_NAME}</strong><br><span style="font-size:12px;color:var(--text-muted)">${r.CATEGORY_NAME || ''}</span></td>
+        <td>${formatDate(r.EVENT_DATE)}</td>
+        <td>${r.VENUE}</td>
+        <td>${statusBadge(r.EVENT_STATUS)}</td>
+        <td>${statusBadge(r.ATTENDANCE)}</td>
+        <td>
+          ${r.FEEDBACK_GIVEN == '0' && r.EVENT_STATUS === 'COMPLETED'
+            ? `<button class="btn btn-ghost btn-sm" onclick="quickFeedback('${r.EVENT_ID}')">Give Feedback</button>`
+            : r.FEEDBACK_GIVEN > 0 ? '<span style="color:var(--green);font-size:13px">✓ Reviewed</span>' : '—'}
+            <button class="btn btn-sm"
+            style="background:var(--red,#ef4444);color:#fff;border:none"
+            id="cancel-btn-${r.EVENT_ID}"
+            onclick="cancelRegistration('${r.EVENT_ID}', '${r.EVENT_NAME}')">
+            ✕ Cancel
+          </button>
+        </td>
+      </tr>`).join('');
+  }async function cancelRegistration(eventId, eventName) {
+    // Confirm before proceeding
+    if (!confirm(`Cancel registration for "${eventName}"?\nThis cannot be undone.`)) return;
+
+    const btn = document.getElementById(`cancel-btn-${eventId}`);
+    if (btn) { btn.disabled = true; btn.textContent = '…'; }
+
+    const res = await apiFetch('cancel.php', {
+      method: 'POST',
+      body:   JSON.stringify({ student_id: user.student_id, event_id: eventId })
+    });
+
+    showToast(res.message, res.success ? 'success' : 'error');
+
+    if (res.success) {
+      // Remove the row from the table immediately — no full reload needed
+      const row = document.getElementById(`reg-row-${eventId}`);
+      if (row) {
+        row.style.transition = 'opacity 0.3s';
+        row.style.opacity = '0';
+        setTimeout(() => { row.remove(); }, 300);
+      }
+    } else {
+      // Re-enable button so user can try again
+      if (btn) { btn.disabled = false; btn.textContent = '✕ Cancel'; }
+    }
+  }
+
+  async function loadRecommendations() {
+    const user = Session.get();
+
+if (!user || !user.student_id) {
+  console.error("User not found");
+  return;
+}
+    const res = await apiFetch(`recommendations.php?student_id=${user.student_id}`);
+    const el  = document.getElementById('rec-list');
+
+    if (!res.success || res.recommendations.length === 0) {
+      el.innerHTML = `<div class="empty-state"><div class="icon">✨</div><h3>No recommendations available</h3><p>Register for more events to get personalized recommendations</p></div>`;
+      return;
+    }
+
+    el.innerHTML = res.recommendations.map((r, i) => {
+  const score = r.RECOMMENDATION_SCORE ?? (10 - i);
+  const date  = r.EVENT_DATE ? formatDate(r.EVENT_DATE) : 'Date TBD';
+
+  return `
+  <div class="rec-card">
+    <div class="rec-score">${Math.round(score)}</div>
+    <div style="flex:1">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">
+        <div>
+          <div style="font-weight:700;font-size:15px;margin-bottom:4px">
+            ${r.EVENT_NAME || 'Event'}
+          </div>
+          <div style="font-size:12px;color:var(--text-muted)">
+            ${r.CATEGORY_NAME || ''} · ${date}
+          </div>
+        </div>
+        ${statusBadge(r.STATUS || 'UPCOMING')}
+      </div>
+      <div style="margin-top:10px;display:flex;gap:8px">
+        <button class="btn btn-primary btn-sm" onclick="registerEvent('${r.EVENT_ID}',this)">
+          Register
+        </button>
+        <button class="btn btn-ghost btn-sm" onclick="openEventModal('${r.EVENT_ID}')">
+          Details
+        </button>
+      </div>
+    </div>
+  </div>`;
+}).join('');
+  }
+
+  function quickFeedback(eventId) {
+    const sel = document.getElementById('feedback-event-select');
+    sel.value = eventId;
+    showSection('feedback');
+  }
+
+  async function submitFeedback() {
+    const eventId = document.getElementById('feedback-event-select').value;
+    const rating  = document.getElementById('feedback-rating').value;
+    const comments= document.getElementById('feedback-comments').value;
+
+    if (!eventId)    { showToast('Please select an event.', 'error'); return; }
+    if (rating == 0) { showToast('Please give a rating.', 'error'); return; }
+
+    const res = await apiFetch('feedback.php', {
+      method: 'POST',
+      body:   JSON.stringify({ student_id: user.student_id, event_id: eventId, rating, comments })
+    });
+
+    showToast(res.message, res.success ? 'success' : 'error');
+    if (res.success) {
+      document.getElementById('feedback-event-select').value = '';
+      document.getElementById('feedback-rating').value = '0';
+      document.getElementById('feedback-comments').value = '';
+    }
+  }
+
+  function showSection(name) {
+  ['dashboard','events','recommendations','my-events','feedback']
+    .forEach(s => {
+      document.getElementById(`section-${s}`).style.display = s === name ? '' : 'none';
+      document.getElementById(`nav-${s}`)?.classList.toggle('active', s === name);
+    });
+
+  document.getElementById('topbar-title').textContent = {
+    'dashboard':       'Dashboard',
+    'events':          'All Events',
+    'recommendations': 'Recommendations',
+    'my-events':       'My Registrations',
+    'feedback':        'Give Feedback',
+    
+  }[name];
+
+  if (name === 'my-events')       loadMyEvents();
+  if (name === 'recommendations') loadRecommendations();
+  if (name === 'events')          loadEvents();
+
+}
+</script>
+</body>
+</html>

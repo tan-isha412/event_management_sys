@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Events — Eventive</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+<div id="toast-container"></div>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-text">Eventive</div>
+      <div class="logo-sub">Events</div>
+    </div>
+    <div class="sidebar-user">
+      <div class="user-avatar" id="sidebar-avatar">S</div>
+      <div class="user-info">
+        <div class="name" id="sidebar-user-name">Student</div>
+        <div class="role" id="sidebar-user-role">Student</div>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <button class="nav-item" onclick="window.location.href='student_dashboard.html'">
+        <span class="icon">🏠</span> Dashboard
+      </button>
+      <button class="nav-item active">
+        <span class="icon">🎫</span> All Events
+      </button>
+      <button class="nav-item" onclick="window.location.href='recommendations.html'">
+        <span class="icon">✨</span> Recommended
+      </button>
+      <button class="nav-item" onclick="window.location.href='student_dashboard.html'">
+        <span class="icon">📋</span> My Registrations
+      </button>
+    </nav>
+    <div class="sidebar-footer">
+      <button class="btn-logout" onclick="logout()">🚪 Sign Out</button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div class="topbar-title">All Events</div>
+      <div class="topbar-actions">
+        <div class="topbar-search">
+          <span>🔍</span>
+          <input type="text" id="search-input" placeholder="Search events…" oninput="filterList()">
+        </div>
+      </div>
+    </div>
+
+    <div class="page-content">
+      <!-- Filter + Sort bar -->
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:12px">
+        <div class="filter-bar" style="margin-bottom:0">
+          <button class="filter-chip active" onclick="setFilter('', this)">All</button>
+          <button class="filter-chip" onclick="setFilter('UPCOMING', this)">Upcoming</button>
+          <button class="filter-chip" onclick="setFilter('ONGOING', this)">Ongoing</button>
+          <button class="filter-chip" onclick="setFilter('COMPLETED', this)">Completed</button>
+        </div>
+        <select id="sort-select" class="form-control" style="width:180px" onchange="filterList()">
+          <option value="date">Sort by Date</option>
+          <option value="name">Sort by Name</option>
+          <option value="capacity">Sort by Capacity</option>
+        </select>
+      </div>
+
+      <div class="events-grid" id="events-grid">
+        <div class="loading-area" style="grid-column:1/-1"><div class="spinner"></div></div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Event Detail Modal -->
+<div class="modal-overlay" id="event-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-title">Event Details</div>
+      <button class="modal-close" onclick="closeModal('event-modal')">✕</button>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('event-modal')">Close</button>
+      <button class="btn btn-primary" id="modal-reg-btn">Register Now</button>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/javascript/app.js"></script>
+<script>
+  let user, allEvents = [], currentFilter = '';
+
+  window.addEventListener('DOMContentLoaded', async () => {
+    user = Session.require('student');
+    if (!user) return;
+    initSidebar();
+    await fetchEvents();
+  });
+
+  async function fetchEvents() {
+    const res = await apiFetch('events.php');
+    allEvents = res.success ? res.events.map(normalizeEvent) : [];
+    filterList();
+  }
+
+  function setFilter(status, btn) {
+    document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+    btn.classList.add('active');
+    currentFilter = status;
+    filterList();
+  }
+
+  function filterList() {
+    const q    = document.getElementById('search-input').value.toLowerCase();
+    const sort = document.getElementById('sort-select').value;
+
+    let filtered = allEvents.filter(e => {
+      const matchFilter = !currentFilter || e.STATUS === currentFilter;
+      const matchSearch = !q ||
+        e.EVENT_NAME.toLowerCase().includes(q) ||
+        (e.VENUE || '').toLowerCase().includes(q) ||
+        (e.DESCRIPTION || '').toLowerCase().includes(q);
+      return matchFilter && matchSearch;
+    });
+
+    filtered.sort((a, b) => {
+      if (sort === 'name')     return a.EVENT_NAME.localeCompare(b.EVENT_NAME);
+      if (sort === 'capacity') return (b.MAX_CAPACITY) - (a.MAX_CAPACITY);
+      return new Date(a.EVENT_DATE) - new Date(b.EVENT_DATE);
+    });
+
+    renderGrid(filtered);
+  }
+
+  function renderGrid(events) {
+    const grid = document.getElementById('events-grid');
+    if (!events.length) {
+      grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="icon">🎫</div><h3>No events found</h3><p>Try adjusting your filters</p></div>';
+      return;
+    }
+    grid.innerHTML = events.map(e => `
+      <div class="event-card">
+        <div class="event-card-header">
+          <div>
+            <div class="event-card-title">${e.EVENT_NAME}</div>
+            <div style="font-size:12px;color:var(--indigo-lt);margin-top:3px">${e.CATEGORY_NAME || 'General'}</div>
+          </div>
+          ${statusBadge(e.STATUS)}
+        </div>
+        <div class="event-card-body">
+          <div class="event-meta"><span class="icon">📅</span>${formatDate(e.EVENT_DATE)}</div>
+          <div class="event-meta"><span class="icon">📍</span>${e.VENUE}</div>
+          <div class="event-meta"><span class="icon">🧑‍💼</span>${e.ORGANIZER_NAME}</div>
+          <div style="margin-top:8px">${capacityBar(e.REG_COUNT || 0, e.MAX_CAPACITY)}</div>
+          <div class="event-meta" style="color:${e.REGISTRATION_FEE > 0 ? 'var(--amber)' : 'var(--green)'}">
+            <span class="icon">${e.REGISTRATION_FEE > 0 ? '💰' : '🆓'}</span>
+            ${e.REGISTRATION_FEE > 0 ? '₹' + e.REGISTRATION_FEE : 'Free Entry'}
+          </div>
+        </div>
+        <div class="event-card-footer">
+          <button class="btn btn-ghost btn-sm" onclick="openDetail('${e.EVENT_ID}')">📋 Details</button>
+          <button class="btn btn-primary btn-sm" id="reg-${e.EVENT_ID}"
+            onclick="doRegister('${e.EVENT_ID}')">Register</button>
+        </div>
+      </div>`).join('');
+  }
+
+  async function openDetail(eventId) {
+    openModal('event-modal');
+    document.getElementById('modal-body').innerHTML =
+      '<div class="loading-area"><div class="spinner"></div></div>';
+
+    const res = await apiFetch(`events.php?event_id=${eventId}`);
+    const e   = res.event;
+    if (!e) return;
+
+    document.getElementById('modal-title').textContent = e.EVENT_NAME;
+    document.getElementById('modal-body').innerHTML = `
+      <div style="display:flex;flex-direction:column;gap:16px">
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          ${statusBadge(e.STATUS)}
+          <span class="badge" style="background:var(--indigo-dim);color:var(--indigo-lt);border:none">${e.CATEGORY_NAME || 'General'}</span>
+        </div>
+        <p style="color:var(--text-secondary);font-size:14px;line-height:1.8">${e.DESCRIPTION || 'No description available.'}</p>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          ${[
+            ['📅 Date', formatDateTime(e.EVENT_DATE)],
+            ['📍 Venue', e.VENUE],
+            ['👤 Organizer', e.ORGANIZER_NAME],
+            ['💰 Fee', e.REGISTRATION_FEE > 0 ? '₹' + e.REGISTRATION_FEE : 'Free'],
+          ].map(([label, val]) => `
+            <div style="background:var(--bg);border-radius:10px;padding:12px;border:1px solid var(--border)">
+              <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">${label}</div>
+              <div style="font-size:14px;font-weight:600">${val}</div>
+            </div>`).join('')}
+        </div>
+        <div>${capacityBar(e.REG_COUNT || 0, e.MAX_CAPACITY)}</div>
+      </div>`;
+
+    document.getElementById('modal-reg-btn').onclick = () => {
+      doRegister(eventId);
+      closeModal('event-modal');
+    };
+  }
+
+  async function doRegister(eventId) {
+    const btn = document.getElementById(`reg-${eventId}`);
+    if (btn) { btn.disabled = true; btn.textContent = '…'; }
+
+    const res = await apiFetch('register.php', {
+      method: 'POST',
+      body:   JSON.stringify({ student_id: user.student_id, event_id: eventId })
+    });
+
+    showToast(res.message, res.success ? 'success' : 'error');
+    if (btn) {
+      btn.textContent = res.success ? '✓ Registered' : 'Register';
+      if (!res.success) btn.disabled = false;
+      else { btn.classList.replace('btn-primary', 'btn-success'); }
+    }
+  }
+</script>
+</body>
+</html>

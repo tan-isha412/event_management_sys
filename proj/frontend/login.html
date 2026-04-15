@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login — Smart Event Management System</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:       #0f0f1a;
+      --bg-card:  #16162a;
+      --border:   rgba(255,255,255,0.07);
+      --indigo:   #7c5cfc;
+      --indigo-lt:#a78bfa;
+      --indigo-dim:rgba(124,92,252,0.12);
+      --amber:    #f9a825;
+      --text-primary:   #f1f0ff;
+      --text-secondary: #9896b8;
+      --text-muted:     #5e5d7a;
+      --font-display: 'Syne', sans-serif;
+      --font-body:    'DM Sans', sans-serif;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: var(--font-body);
+      background: var(--bg);
+      color: var(--text-primary);
+      min-height: 100vh;
+      display: flex;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Left panel */
+    .left-panel {
+      flex: 1;
+      background: linear-gradient(145deg, #0c0c1e 0%, #1a0a3d 50%, #0d1a3a 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 60px 40px;
+      position: relative;
+      overflow: hidden;
+    }
+    .left-panel::before {
+      content: '';
+      position: absolute;
+      width: 500px; height: 500px;
+      background: radial-gradient(circle, rgba(124,92,252,0.2) 0%, transparent 70%);
+      top: -100px; left: -100px;
+    }
+    .left-panel::after {
+      content: '';
+      position: absolute;
+      width: 400px; height: 400px;
+      background: radial-gradient(circle, rgba(249,168,37,0.1) 0%, transparent 70%);
+      bottom: -80px; right: -80px;
+    }
+    .panel-content { position: relative; z-index: 1; text-align: center; }
+    .panel-logo {
+      font-family: var(--font-display);
+      font-size: 38px;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--indigo-lt), var(--amber));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      line-height: 1.1;
+      margin-bottom: 12px;
+    }
+    .panel-tagline {
+      font-size: 15px;
+      color: var(--text-secondary);
+      max-width: 320px;
+      line-height: 1.7;
+    }
+    .panel-features {
+      margin-top: 40px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      text-align: left;
+    }
+    .feature-item {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 12px;
+      padding: 14px 18px;
+    }
+    .feature-icon {
+      width: 40px; height: 40px;
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+    .feature-icon.purple { background: var(--indigo-dim); }
+    .feature-icon.gold   { background: rgba(249,168,37,0.12); }
+    .feature-icon.teal   { background: rgba(34,211,238,0.1); }
+    .feature-text h4 { font-size: 13px; font-weight: 600; margin-bottom: 2px; }
+    .feature-text p  { font-size: 12px; color: var(--text-muted); }
+
+    /* Right panel */
+    .right-panel {
+      width: 480px;
+      background: var(--bg-card);
+      border-left: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 48px 40px;
+    }
+    .login-box { width: 100%; }
+    .login-header { margin-bottom: 28px; }
+    .login-header h2 {
+      font-family: var(--font-display);
+      font-size: 26px;
+      font-weight: 800;
+      margin-bottom: 6px;
+    }
+    .login-header p { font-size: 14px; color: var(--text-secondary); }
+
+    /* Role toggle */
+    .role-toggle {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 11px;
+      padding: 4px;
+      margin-bottom: 28px;
+    }
+    .role-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 10px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-muted);
+      background: none;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .role-btn.active {
+      background: var(--indigo);
+      color: white;
+    }
+    .role-btn:not(.active):hover {
+      color: var(--text-secondary);
+      background: rgba(255,255,255,0.04);
+    }
+
+    /* Form */
+    .login-form { display: flex; flex-direction: column; gap: 16px; }
+    .form-group { display: flex; flex-direction: column; gap: 7px; }
+    .form-label {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: var(--text-secondary);
+    }
+    .form-control {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 15px;
+      color: var(--text-primary);
+      font-family: var(--font-body);
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .form-control:focus {
+      border-color: var(--indigo);
+      box-shadow: 0 0 0 3px var(--indigo-dim);
+    }
+    .form-control::placeholder { color: var(--text-muted); }
+
+    .btn-login {
+      background: var(--indigo);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      padding: 13px;
+      font-family: var(--font-display);
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 6px;
+    }
+    .btn-login:hover { background: #6b48f0; transform: translateY(-1px); }
+    .btn-login:active { transform: translateY(0); }
+    .btn-login:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+    .error-msg {
+      background: rgba(239,68,68,0.1);
+      border: 1px solid rgba(239,68,68,0.2);
+      color: #fca5a5;
+      border-radius: 9px;
+      padding: 10px 14px;
+      font-size: 13px;
+      display: none;
+    }
+    .error-msg.show { display: block; }
+
+    .form-hint {
+      font-size: 12px;
+      color: var(--text-muted);
+      text-align: center;
+      margin-top: 6px;
+    }
+    .form-hint span { color: var(--indigo-lt); }
+
+    @media (max-width: 900px) {
+      .left-panel { display: none; }
+      .right-panel { width: 100%; border-left: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Left decorative panel -->
+  <div class="left-panel">
+    <div class="panel-content">
+      <div class="panel-logo">Eventive</div>
+      <div class="panel-tagline">Smart Event Management System for Modern College Campuses</div>
+
+      <div class="panel-features">
+        <div class="feature-item">
+          <div class="feature-icon purple">🎯</div>
+          <div class="feature-text">
+            <h4>AI-Powered Recommendations</h4>
+            <p>Events curated for your interests & history</p>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-icon gold">📊</div>
+          <div class="feature-text">
+            <h4>Real-Time Analytics</h4>
+            <p>Popular events and more!!!</p>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-icon teal">⚡</div>
+          <div class="feature-text">
+            <h4>Instant Registration</h4>
+            <p>Register for events with a single click</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right login panel -->
+  <div class="right-panel">
+    <div class="login-box">
+      <div class="login-header">
+        <h2>Welcome Back</h2>
+        <p>Sign in to your Eventive account</p>
+      </div>
+
+      <!-- Role toggle -->
+      <div class="role-toggle">
+        <button class="role-btn active" id="btn-student" onclick="setRole('student')">
+          🎓 Student
+        </button>
+        <button class="role-btn" id="btn-admin" onclick="setRole('admin')">
+          🛠️ Admin
+        </button>
+      </div>
+
+      <!-- Error message -->
+      <div class="error-msg" id="error-msg"></div>
+
+      <!-- Student Form -->
+      <form class="login-form" id="form-student" onsubmit="doLogin(event)">
+        <div class="form-group">
+          <label class="form-label">Student ID</label>
+          <input type="text" id="student_id" class="form-control" placeholder="e.g. STU2024001" autocomplete="off">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Date of Birth</label>
+          <input type="date" id="dob" class="form-control">
+        </div>
+        <button type="submit" class="btn-login" id="login-btn">
+          Sign In  →
+        </button>
+        <p class="form-hint">Use your <span>Student ID</span> and registered Date of Birth</p>
+      </form>
+
+      <!-- Admin Form -->
+      <form class="login-form" id="form-admin" style="display:none" onsubmit="doLogin(event)">
+        <div class="form-group">
+          <label class="form-label">Email Address</label>
+          <input type="email" id="admin_email" class="form-control" placeholder="admin@college.edu">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input type="password" id="admin_password" class="form-control" placeholder="••••••••">
+        </div>
+        <button type="submit" class="btn-login" id="login-btn-admin">
+          Sign In  →
+        </button>
+        <p class="form-hint">Admin credentials provided by <span>IT department</span></p>
+      </form>
+    </div>
+  </div>
+
+<script>
+  let currentRole = 'student';
+
+  function setRole(role) {
+    currentRole = role;
+    document.getElementById('form-student').style.display = role === 'student' ? 'flex' : 'none';
+    document.getElementById('form-admin').style.display   = role === 'admin'   ? 'flex' : 'none';
+    document.getElementById('btn-student').classList.toggle('active', role === 'student');
+    document.getElementById('btn-admin').classList.toggle('active',   role === 'admin');
+    hideError();
+  }
+
+  function showError(msg) {
+    const el = document.getElementById('error-msg');
+    el.textContent = msg;
+    el.classList.add('show');
+  }
+  function hideError() {
+    document.getElementById('error-msg').classList.remove('show');
+  }
+
+  async function doLogin(e) {
+    e.preventDefault();
+    hideError();
+
+    let payload = { role: currentRole };
+
+    if (currentRole === 'student') {
+      const sid = document.getElementById('student_id').value.trim();
+      const dob = document.getElementById('dob').value;
+      if (!sid || !dob) { showError('Please enter your Student ID and Date of Birth.'); return; }
+      payload.student_id = sid;
+      payload.dob        = dob;
+    } else {
+      const email = document.getElementById('admin_email').value.trim();
+      const pwd   = document.getElementById('admin_password').value;
+      if (!email || !pwd) { showError('Please enter your email and password.'); return; }
+      payload.email    = email;
+      payload.password = pwd;
+    }
+
+    const btn = document.querySelector('#form-' + currentRole + ' .btn-login');
+    btn.disabled     = true;
+    btn.textContent  = 'Signing in…';
+
+    try {
+      const res  = await fetch('../backend/login.php', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify(payload)
+      });
+      const data = await res.json();
+
+      if (data.success) {
+        localStorage.setItem('sem_user', JSON.stringify({
+          ...data.user,
+          role: data.role
+        }));
+        window.location.href = data.redirect;
+      } else {
+        showError(data.message || 'Login failed. Please try again.');
+        btn.disabled    = false;
+        btn.textContent = 'Sign In  →';
+      }
+    } catch (err) {
+      showError('Could not connect to server. Please try again.');
+      btn.disabled    = false;
+      btn.textContent = 'Sign In  →';
+    }
+  }
+
+  // Redirect if already logged in
+  // Redirect ONLY if coming from another page (not fresh login)
+const session = localStorage.getItem('sem_user');
+
+if (session && !window.location.href.includes("login.html")) {
+  const u = JSON.parse(session);
+  if (u.role === 'admin')   window.location.href = 'admin_dashboard.html';
+  if (u.role === 'student') window.location.href = 'student_dashboard.html';
+}
+</script>
+</body>
+</html>

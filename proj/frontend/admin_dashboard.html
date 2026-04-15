@@ -1,0 +1,1369 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard — Eventive</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <style>
+    /* ---- Admin-only accent colour (orange instead of indigo) ---- */
+    :root {
+      --admin: #f97316;
+      --admin-dim: rgba(249, 115, 22, 0.12);
+      --admin-lt: #fdba74;
+    }
+
+    .sidebar-logo .logo-sub {
+      color: var(--admin-lt);
+    }
+
+    .sidebar .nav-item.active {
+      background: var(--admin-dim);
+      color: var(--admin-lt);
+    }
+
+    .sidebar .nav-item.active .icon {
+      color: var(--admin);
+    }
+
+    .btn-admin {
+      background: var(--admin);
+      color: #fff;
+      border: none;
+      border-radius: 9px;
+      padding: 9px 18px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background .2s;
+    }
+
+    .btn-admin:hover {
+      background: #ea6c08;
+    }
+
+    .stat-card.orange .stat-icon {
+      background: rgba(249, 115, 22, .15);
+    }
+
+    .stat-card.orange {
+      border-left: 3px solid var(--admin);
+    }
+
+    /* ---- Data table improvements ---- */
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+
+    .data-table th {
+      text-align: left;
+      padding: 10px 14px;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .data-table td {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border);
+      color: var(--text-primary);
+      vertical-align: middle;
+    }
+
+    .data-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .data-table tr:hover td {
+      background: rgba(255, 255, 255, .02);
+    }
+
+    /* ---- Rating bar ---- */
+    .rating-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .rating-fill {
+      height: 6px;
+      border-radius: 3px;
+      background: var(--admin);
+      flex-shrink: 0;
+    }
+
+    .rating-bg {
+      height: 6px;
+      border-radius: 3px;
+      background: var(--border);
+      flex: 1;
+      overflow: hidden;
+    }
+
+    /* ---- Attendance status dots ---- */
+    .dot {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      margin-right: 6px;
+    }
+
+    .dot.present {
+      background: #22c55e;
+    }
+
+    .dot.absent {
+      background: #ef4444;
+    }
+
+    .dot.nm {
+      background: #888;
+    }
+
+    /* ---- Section header with action button ---- */
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .section-header h2 {
+      font-size: 20px;
+      font-weight: 700;
+    }
+
+    /* ---- Add event form ---- */
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    @media(max-width:640px) {
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+
+    .form-label {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .6px;
+      color: var(--text-secondary);
+    }
+
+    .form-control {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 11px 14px;
+      color: var(--text-primary);
+      font-size: 14px;
+      font-family: inherit;
+      outline: none;
+      transition: border-color .2s;
+    }
+
+    .form-control:focus {
+      border-color: var(--admin);
+      box-shadow: 0 0 0 3px var(--admin-dim);
+    }
+
+    .form-control option {
+      background: var(--bg-card);
+    }
+
+    /* ---- Attendance modal ---- */
+    .att-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+
+    .att-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 14px;
+      background: var(--bg);
+      border-radius: 8px;
+      gap: 12px;
+    }
+
+    .att-row .name {
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .att-row .sid {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .att-btns {
+      display: flex;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+
+    .att-btns button {
+      padding: 5px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      border: 1px solid var(--border);
+      background: none;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all .15s;
+    }
+
+    .att-btns button.active-present {
+      background: #22c55e22;
+      border-color: #22c55e;
+      color: #22c55e;
+    }
+
+    .att-btns button.active-absent {
+      background: #ef444422;
+      border-color: #ef4444;
+      color: #ef4444;
+    }
+
+    .att-btns button:hover {
+      background: rgba(255, 255, 255, .05);
+    }
+  </style>
+</head>
+
+<body>
+  <div id="toast-container"></div>
+
+  <div class="layout">
+    <!-- ===== SIDEBAR ===== -->
+    <aside class="sidebar">
+      <div class="sidebar-logo">
+        <div class="logo-text">Eventive</div>
+        <div class="logo-sub">Admin Panel</div>
+      </div>
+      <div class="sidebar-user">
+        <div class="user-avatar" id="sidebar-avatar">A</div>
+        <div class="user-info">
+          <div class="name" id="sidebar-user-name">Loading…</div>
+          <div class="role" id="sidebar-user-role">Administrator</div>
+        </div>
+      </div>
+      <nav class="sidebar-nav">
+        <div class="nav-section-label">Overview</div>
+        <button class="nav-item active" id="nav-overview" onclick="showSection('overview')">
+          <span class="icon">📊</span> Overview
+        </button>
+        <div class="nav-section-label">Events</div>
+        <button class="nav-item" id="nav-manage-events" onclick="showSection('manage-events')">
+          <span class="icon">🎫</span> Manage Events
+        </button>
+        <button class="nav-item" id="nav-add-event" onclick="showSection('add-event')">
+          <span class="icon">➕</span> Add Event
+        </button>
+        <button class="nav-item" id="nav-add-coordinator" onclick="showSection('add-coordinator')">
+  <span class="icon">👤</span> Add Coordinator
+</button>
+<button class="nav-item" id="nav-add-student" onclick="showSection('add-student')">
+  <span class="icon">🎓</span> Add Student
+</button>
+        <div class="nav-section-label">Students</div>
+        <button class="nav-item" id="nav-attendance" onclick="showSection('attendance')">
+          <span class="icon">✅</span> Mark Attendance
+        </button>
+        <button class="nav-item" id="nav-registrations" onclick="showSection('registrations')">
+          <span class="icon">📋</span> Registrations
+        </button>
+        <div class="nav-section-label">Insights</div>
+        <button class="nav-item" id="nav-analytics" onclick="showSection('analytics')">
+          <span class="icon">📈</span> Analytics
+        </button>
+        <button class="nav-item" id="nav-feedback" onclick="showSection('feedback')">
+          <span class="icon">💬</span> Feedback
+        </button>
+        <button class="nav-item" id="nav-budget" onclick="showSection('budget')">
+          <span class="icon">💰</span> Budget Usage
+        </button>
+      </nav>
+      <div class="sidebar-footer">
+        <button class="btn-logout" onclick="logout()"><span>🚪</span> Sign Out</button>
+      </div>
+    </aside>
+
+    <!-- ===== MAIN ===== -->
+    <main class="main">
+      <div class="topbar">
+        <div class="topbar-title" id="topbar-title">Overview</div>
+        <div class="topbar-actions">
+          <button class="btn btn-ghost btn-sm" onclick="showSection('add-event')">＋ New Event</button>
+        </div>
+      </div>
+
+      <div class="page-content">
+
+        <!-- ===== OVERVIEW ===== -->
+        <section id="section-overview">
+          <div class="stats-grid" id="stats-grid">
+            <div class="stat-card orange">
+              <div class="stat-icon orange">🎫</div>
+              <div>
+                <div class="stat-value" id="stat-events">—</div>
+                <div class="stat-label">Total Events</div>
+              </div>
+            </div>
+            <div class="stat-card indigo">
+              <div class="stat-icon indigo">👥</div>
+              <div>
+                <div class="stat-value" id="stat-students">—</div>
+                <div class="stat-label">Total Students</div>
+              </div>
+            </div>
+            <div class="stat-card green">
+              <div class="stat-icon green">📝</div>
+              <div>
+                <div class="stat-value" id="stat-regs">—</div>
+                <div class="stat-label">Registrations</div>
+              </div>
+            </div>
+            <div class="stat-card amber">
+              <div class="stat-icon amber">📈</div>
+              <div>
+                <div class="stat-value" id="stat-avg-regs">—</div>
+                <div class="stat-label">Avg. per Event</div>
+              </div>
+            </div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">🏆 Most Popular Events</div>
+              </div>
+              <div id="popular-list">
+                <div class="loading-area">
+                  <div class="spinner"></div>
+                </div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">🗂 Events by Category</div>
+              </div>
+              <div id="category-list">
+                <div class="loading-area">
+                  <div class="spinner"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ===== MANAGE EVENTS ===== -->
+        <section id="section-manage-events" style="display:none">
+          <div class="section-header">
+            <h2>All Events</h2>
+            <button class="btn-admin" onclick="showSection('add-event')">＋ Add New Event</button>
+          </div>
+          <div class="card">
+            <div class="table-wrap">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Event Name</th>
+                    <th>Date</th>
+                    <th>Venue</th>
+                    <th>Category</th>
+                    <th>Registrations</th>
+                    <th>Budget</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="events-tbody">
+                  <tr>
+                    <td colspan="7">
+                      <div class="loading-area">
+                        <div class="spinner"></div>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+        <section id="section-add-student" style="display:none">
+  <div class="section-header">
+    <h2>Add Student</h2>
+  </div>
+
+  <div class="card" style="max-width:600px">
+
+    <div class="form-grid">
+
+      <div class="form-group" style="grid-column:1/-1">
+        <label class="form-label">Student Name</label>
+        <input type="text" id="st-name" class="form-control" placeholder="Enter full name">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Department</label>
+        <select id="st-dept" class="form-control"></select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Year</label>
+        <input type="number" id="st-year" class="form-control" placeholder="1 - 4" min="1" max="4">
+      </div>
+
+      <div class="form-group" style="grid-column:1/-1">
+        <label class="form-label">Date of Birth</label>
+        <input type="date" id="st-dob" class="form-control">
+      </div>
+
+    </div>
+
+    <div style="margin-top:20px; display:flex; gap:12px">
+      <button class="btn-admin" onclick="addStudent()">Add Student</button>
+      <button class="btn btn-ghost" onclick="clearStudentForm()">Reset</button>
+    </div>
+
+    <div id="st-msg" style="margin-top:12px; font-size:14px"></div>
+
+  </div>
+</section>
+        <!-- ===== ADD EVENT ===== -->
+        <section id="section-add-event" style="display:none">
+          <div class="section-header">
+            <h2>Add New Event</h2>
+          </div>
+          <div class="card" style="max-width:700px">
+            <div class="form-grid">
+              <div class="form-group" style="grid-column:1/-1">
+                <label class="form-label">Event Name</label>
+                <input type="text" id="ev-name" class="form-control" placeholder="e.g. Annual Tech Fest 2025">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Event Date</label>
+                <input type="datetime-local" id="ev-date" class="form-control">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Venue</label>
+                <select id="ev-venue" class="form-control">
+                  <option value="">Loading venues…</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Category</label>
+                <select id="ev-category" class="form-control">
+                  <option value="">Loading categories…</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Budget Allocated (₹)</label>
+                <input type="number" id="ev-budget" class="form-control" placeholder="e.g. 50000">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Coordinator</label>
+                <select id="ev-coordinator" class="form-control">
+                  <option value="">Loading coordinators…</option>
+                </select>
+              </div>
+            </div>
+            <div style="margin-top:20px;display:flex;gap:12px">
+              <button class="btn-admin" onclick="submitAddEvent()">Create Event</button>
+              <button class="btn btn-ghost" onclick="showSection('manage-events')">Cancel</button>
+            </div>
+            <div id="add-event-msg" style="margin-top:12px;font-size:14px"></div>
+          </div>
+        </section>
+        <section id="section-add-coordinator" style="display:none">
+  <div class="section-header">
+    <h2>Add Coordinator</h2>
+  </div>
+
+  <div class="card" style="max-width:500px">
+    <div class="form-group">
+      <label class="form-label">Select Student</label>
+      <select id="coord-student" class="form-control"></select>
+    </div>
+
+    <div style="margin-top:15px">
+      <button class="btn-admin" onclick="addCoordinator()">Add Coordinator</button>
+    </div>
+
+    <div id="coord-msg" style="margin-top:10px"></div>
+  </div>
+</section>
+        <!-- ===== MARK ATTENDANCE ===== -->
+        <section id="section-attendance" style="display:none">
+          <div class="section-header">
+            <h2>Mark Attendance</h2>
+          </div>
+          <div class="card" style="max-width:640px;margin-bottom:20px">
+            <div class="form-group">
+              <label class="form-label">Select Event</label>
+              <select id="att-event-select" class="form-control" onchange="loadAttendanceList()">
+                <option value="">— Choose an event —</option>
+              </select>
+            </div>
+          </div>
+          <div class="card" id="att-card" style="display:none">
+            <div class="card-header">
+              <div class="card-title" id="att-card-title">Registered Students</div>
+              <button class="btn-admin" onclick="saveAllAttendance()" style="font-size:13px;padding:7px 14px">Save
+                All</button>
+            </div>
+            <div id="att-list-container">
+              <div class="loading-area">
+                <div class="spinner"></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ===== REGISTRATIONS ===== -->
+        <section id="section-registrations" style="display:none">
+          <div class="section-header">
+            <h2>All Registrations</h2>
+          </div>
+          <div class="card">
+            <div class="table-wrap">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Student</th>
+                    <th>Event</th>
+                    <th>Date</th>
+                    <th>Venue</th>
+                    <th>Attendance</th>
+                  </tr>
+                </thead>
+                <tbody id="reg-tbody">
+                  <tr>
+                    <td colspan="5">
+                      <div class="loading-area">
+                        <div class="spinner"></div>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ===== ANALYTICS ===== -->
+        <section id="section-analytics" style="display:none">
+          <div class="section-header">
+            <h2>Event Analytics</h2>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">📊 Popular Events (by Registrations)</div>
+            </div>
+            <div class="table-wrap">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Event Name</th>
+                    <th>Date</th>
+                    <th>Venue</th>
+                    <th>Registrations</th>
+                  </tr>
+                </thead>
+                <tbody id="analytics-tbody">
+                  <tr>
+                    <td colspan="5">
+                      <div class="loading-area">
+                        <div class="spinner"></div>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ===== FEEDBACK ANALYSIS ===== -->
+        <section id="section-feedback" style="display:none">
+          <div class="section-header">
+            <h2>Feedback Analysis</h2>
+          </div>
+          <div class="card">
+            <div class="table-wrap">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Event Name</th>
+                    <th>Avg. Rating</th>
+                    <th>Feedback Count</th>
+                    <th>Rating Bar</th>
+                  </tr>
+                </thead>
+                <tbody id="feedback-tbody">
+                  <tr>
+                    <td colspan="4">
+                      <div class="loading-area">
+                        <div class="spinner"></div>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ===== BUDGET USAGE ===== -->
+        <section id="section-budget" style="display:none">
+          <div class="section-header">
+            <h2>💰 Budget Usage</h2>
+          </div>
+
+          <!-- Summary cards -->
+          <div class="stats-grid" style="margin-bottom:20px">
+            <div class="stat-card orange">
+              <div class="stat-icon orange">💼</div>
+              <div>
+                <div class="stat-value" id="bud-total-alloc">—</div>
+                <div class="stat-label">Total Allocated</div>
+              </div>
+            </div>
+            <div class="stat-card amber">
+              <div class="stat-icon amber">💸</div>
+              <div>
+                <div class="stat-value" id="bud-total-used">—</div>
+                <div class="stat-label">Total Spent</div>
+              </div>
+            </div>
+            <div class="stat-card green">
+              <div class="stat-icon green">🏦</div>
+              <div>
+                <div class="stat-value" id="bud-total-rem">—</div>
+                <div class="stat-label">Total Remaining</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Add Expense Form -->
+          <div class="card" style="margin-bottom:20px">
+            <div class="card-header">
+              <div class="card-title">➕ Add Expense</div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:14px;align-items:flex-end;padding:4px 0">
+              <div class="form-group">
+                <label class="form-label">Event</label>
+                <select id="exp-event-select" class="form-control">
+                  <option value="">— Select Event —</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Amount (₹)</label>
+                <input type="number" id="exp-amount" class="form-control" placeholder="e.g. 5000" min="1" step="1">
+              </div>
+              <button class="btn-admin" onclick="submitExpense()" style="height:44px">
+                Add Expense
+              </button>
+            </div>
+            <div id="exp-result" style="margin-top:10px;font-size:13px;display:none"></div>
+          </div>
+
+          <!-- Per-event budget table -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">📊 Event-wise Budget Breakdown</div>
+              <button class="btn-admin" style="font-size:12px;padding:6px 14px" onclick="loadBudget()">
+                🔄 Refresh
+              </button>
+            </div>
+            <div class="table-wrap">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Event Name</th>
+                    <th>Budget Allocated</th>
+                    <th>Budget Used</th>
+                    <th>Remaining</th>
+                    <th>Usage %</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody id="budget-tbody">
+                  <tr>
+                    <td colspan="6">
+                      <div class="loading-area">
+                        <div class="spinner"></div>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+      </div><!-- page-content -->
+    </main>
+  </div><!-- layout -->
+
+  <script src="../assets/javascript/app.js"></script>
+  <script>
+    let user = null;
+    let allEvents = [];
+    let attStatuses = {}; // { studentId: 'PRESENT'|'ABSENT' }
+
+    window.addEventListener('DOMContentLoaded', async () => {
+      user = Session.require('admin');
+      if (!user) return;
+      initSidebar();
+      loadOverview();
+    });
+
+    // ============================================================
+    // SECTION ROUTING
+    // ============================================================
+    const SECTIONS = ['overview','add-student', 'manage-events', 'add-event', 'attendance', 'registrations', 'analytics','add-coordinator', 'feedback', 'budget'];
+    const TITLES = {
+      'overview': 'Overview',
+      'manage-events': 'Manage Events',
+      'add-event': 'Add New Event',
+      'attendance': 'Mark Attendance',
+      'registrations': 'All Registrations',
+      'analytics': 'Analytics',
+      'add-student': 'Add Student',
+      'feedback': 'Feedback Analysis',
+      'budget': 'Budget Usage',
+      'add-coordinator': 'Add Coordinator'
+    };
+    function clearStudentForm() {
+  document.getElementById('st-name').value = '';
+  document.getElementById('st-dept').selectedIndex = 0;
+  document.getElementById('st-year').value = '';
+  document.getElementById('st-dob').value = '';
+}
+    function showSection(name) {
+      SECTIONS.forEach(s => {
+        document.getElementById(`section-${s}`).style.display = s === name ? '' : 'none';
+        document.getElementById(`nav-${s}`)?.classList.toggle('active', s === name);
+      });
+      document.getElementById('topbar-title').textContent = TITLES[name] || name;
+      if (name === 'add-coordinator') loadStudentsForCoordinator();
+      if (name === 'manage-events') loadManageEvents();
+      if (name === 'add-event') loadAddEventDropdowns();
+      if (name === 'attendance') loadEventSelectForAttendance();
+      if (name === 'registrations') loadRegistrations();
+      if (name === 'analytics') loadAnalytics();
+      if (name === 'feedback') loadFeedback();
+      if (name === 'budget') loadBudget();
+      if (name === 'add-student') loadDepartments();
+    }
+
+    // ============================================================
+    // OVERVIEW
+    // ============================================================
+    async function loadOverview() {
+      const [ovRes, popRes, catRes] = await Promise.all([
+        apiFetch('get_analytics.php?type=overview'),
+        apiFetch('get_analytics.php?type=popular'),
+        apiFetch('get_analytics.php?type=category_dist')
+      ]);
+
+      if (ovRes.success && ovRes.data) {
+        const d = ovRes.data;
+        document.getElementById('stat-events').textContent = d.total_events ?? '—';
+        document.getElementById('stat-students').textContent = d.total_students ?? '—';
+        document.getElementById('stat-regs').textContent = d.total_registrations ?? '—';
+        const avg = d.total_events > 0
+          ? Math.round(d.total_registrations / d.total_events)
+          : 0;
+        document.getElementById('stat-avg-regs').textContent = avg;
+      }
+
+      // Popular events
+      const popEl = document.getElementById('popular-list');
+      const popular = popRes.success ? (popRes.data?.popular_events || []) : [];
+      if (popular.length === 0) {
+        popEl.innerHTML = '<div class="empty-state"><div class="icon">🏆</div><p>No data yet</p></div>';
+      } else {
+        popEl.innerHTML = popular.slice(0, 5).map((e, i) => `
+        <div style="display:flex;align-items:center;justify-content:space-between;
+                    padding:10px 0;border-bottom:1px solid var(--border)">
+          <div style="display:flex;align-items:center;gap:12px">
+            <span style="font-size:18px;font-weight:800;color:var(--admin);min-width:24px">${i + 1}</span>
+            <div>
+              <div style="font-weight:600;font-size:14px">${e.event_name}</div>
+              <div style="font-size:12px;color:var(--text-muted)">${formatDate(e.date)} · ${e.venue || '—'}</div>
+            </div>
+          </div>
+          <span style="font-size:13px;font-weight:600;color:var(--admin)">${e.registrations} reg</span>
+        </div>`).join('');
+      }
+
+      // Category distribution
+      const catEl = document.getElementById('category-list');
+      const cats = catRes.success ? (catRes.data?.category_dist || []) : [];
+      const maxCat = cats.length ? Math.max(...cats.map(c => c.count)) : 1;
+      if (cats.length === 0) {
+        catEl.innerHTML = '<div class="empty-state"><div class="icon">🗂</div><p>No categories yet</p></div>';
+      } else {
+        catEl.innerHTML = cats.map(c => `
+        <div style="padding:8px 0">
+          <div style="display:flex;justify-content:space-between;margin-bottom:5px;font-size:13px">
+            <span style="font-weight:500">${c.category}</span>
+            <span style="color:var(--text-muted)">${c.count} event${c.count !== 1 ? 's' : ''}</span>
+          </div>
+          <div class="rating-bg">
+            <div class="rating-fill" style="width:${Math.round((c.count / maxCat) * 100)}%"></div>
+          </div>
+        </div>`).join('');
+      }
+    }
+    
+    // ============================================================
+    // MANAGE EVENTS
+    // ============================================================
+    async function loadManageEvents() {
+      const res = await apiFetch('events.php');
+      const tbody = document.getElementById('events-tbody');
+      if (!res.success || !res.events?.length) {
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--text-muted)">No events found</td></tr>`;
+        return;
+      }
+      allEvents = res.events;
+      tbody.innerHTML = res.events.map(e => `
+      <tr>
+        <td><strong>${e.name}</strong></td>
+        <td>${formatDate(e.date)}</td>
+        <td>${e.venue || '—'}</td>
+        <td><span class="badge badge-upcoming">${e.category || 'General'}</span></td>
+        <td style="font-weight:600">${e.registrations}</td>
+        <td>₹${(e.budget || 0).toLocaleString('en-IN')}</td>
+        <td>
+          <button class="btn btn-ghost btn-sm"
+            onclick="openAttendanceForEvent('${e.event_id}','${(e.name || '').replace(/'/g, "\\'")}')">
+            Attendance
+          </button>
+        </td>
+      </tr>`).join('');
+    }
+
+    // ============================================================
+    // ============================================================
+    // ADD EVENT — DROPDOWNS + SUBMIT
+    // ============================================================
+    async function loadAddEventDropdowns() {
+      // Load categories
+      const catSel = document.getElementById('ev-category');
+      const venueSel = document.getElementById('ev-venue');
+      const coordSel = document.getElementById('ev-coordinator');
+
+      catSel.innerHTML = '<option value="">— Select Category —</option>';
+      venueSel.innerHTML = '<option value="">— Select Venue —</option>';
+      coordSel.innerHTML = '<option value="">— Select Coordinator —</option>';
+
+      const [catRes, venueRes, coordRes] = await Promise.all([
+        apiFetch('get_categories.php'),
+        apiFetch('get_venues.php'),
+        apiFetch('get_coordinators.php')
+      ]);
+      console.log("COORD DATA:", coordRes);
+      (Array.isArray(catRes) ? catRes : []).forEach(c => {
+        catSel.innerHTML += `<option value="${c.CATEGORYID}">${c.CATEGORYNAME}</option>`;
+      });
+      (Array.isArray(venueRes) ? venueRes : []).forEach(v => {
+        venueSel.innerHTML += `<option value="${v.VENUEID}">${v.VENUENAME}</option>`;
+      });
+      (Array.isArray(coordRes) ? coordRes : []).forEach(c => {
+        coordSel.innerHTML += `<option value="${c.COORDINATORID}">${c.NAME}</option>`;
+      });
+    }
+
+    async function submitAddEvent() {
+      console.log("BUTTON CLICKED");
+      const name = document.getElementById('ev-name').value.trim();
+      const rawDate = document.getElementById('ev-date').value;
+
+      if (!rawDate) {
+        alert("Please select date");
+        return;
+      }
+
+      const eventDate = rawDate.split('T')[0];
+      const venueId = document.getElementById('ev-venue').value.trim();
+      const catId = document.getElementById('ev-category').value.trim();
+      const budget = document.getElementById('ev-budget').value.trim();
+      const coordId = document.getElementById('ev-coordinator').value.trim();
+      const msgEl = document.getElementById('add-event-msg');
+
+      if (!name || !rawDate || !venueId || !catId || !coordId) {
+        msgEl.style.color = '#ef4444';
+        msgEl.textContent = '⚠ Please fill in all fields including Category, Venue, and Coordinator.';
+        return;
+      }
+
+
+      // Auto-generate unique EventID: prefix from category + timestamp suffix
+      const eventId = 'EV' + String(Date.now()).slice(-6);
+
+      msgEl.textContent = 'Saving…';
+      msgEl.style.color = 'var(--text-muted)';
+
+      const res = await apiFetch('add_event.php', {
+        method: 'POST',
+        body: JSON.stringify({
+          action: 'add',
+          event_name: name,
+          event_date: eventDate,
+          budget: budget,
+          category_id: catId,
+          venue_id: venueId,
+          coordinator_id: coordId
+        })
+      });
+
+      if (res.success) {
+        msgEl.style.color = '#22c55e';
+        msgEl.textContent = `✅ Event created! (ID: ${eventId})`;
+        document.getElementById('ev-name').value = '';
+        const date = document.getElementById('ev-date').value.split('T')[0];
+        document.getElementById('ev-budget').value = '';
+        document.getElementById('ev-category').selectedIndex = 0;
+        document.getElementById('ev-venue').selectedIndex = 0;
+        document.getElementById('ev-coordinator').selectedIndex = 0;
+      } else {
+        msgEl.style.color = '#ef4444';
+        msgEl.textContent = '❌ ' + (res.message || 'Failed to create event.');
+      }
+    }
+
+    // ============================================================
+    // ATTENDANCE
+    // ============================================================
+    async function loadEventSelectForAttendance() {
+      const sel = document.getElementById('att-event-select');
+      if (allEvents.length === 0) {
+        const res = await apiFetch('events.php');
+        allEvents = res.success ? res.events : [];
+      }
+      sel.innerHTML = '<option value="">— Choose an event —</option>' +
+        allEvents.map(e =>
+          `<option value="${e.event_id}">${e.name} (${formatDate(e.date)})</option>`
+        ).join('');
+      document.getElementById('att-card').style.display = 'none';
+    }
+
+    async function loadAttendanceList() {
+      const eventId = document.getElementById('att-event-select').value;
+      if (!eventId) { document.getElementById('att-card').style.display = 'none'; return; }
+
+      document.getElementById('att-card').style.display = '';
+      document.getElementById('att-list-container').innerHTML =
+        '<div class="loading-area"><div class="spinner"></div></div>';
+
+      const res = await apiFetch(`get_analytics.php?type=attendance_list&event_id=${eventId}`);
+      const list = res.success ? (res.data?.attendance || []) : [];
+
+      const ev = allEvents.find(e => String(e.event_id) === String(eventId));
+      document.getElementById('att-card-title').textContent =
+        `Registered Students — ${ev ? ev.name : 'Event'}`;
+
+      attStatuses = {};
+      list.forEach(s => {
+        attStatuses[s.student_id] = s.status === 'PRESENT' ? 'PRESENT'
+          : s.status === 'ABSENT' ? 'ABSENT' : '';
+      });
+
+      if (list.length === 0) {
+        document.getElementById('att-list-container').innerHTML =
+          '<div class="empty-state"><div class="icon">📋</div><p>No registrations for this event</p></div>';
+        return;
+      }
+
+      document.getElementById('att-list-container').innerHTML = `
+      <div class="att-list">
+        ${list.map(s => `
+          <div class="att-row" id="att-row-${s.student_id}">
+            <div>
+              <div class="name">${s.name}</div>
+              <div class="sid">ID: ${s.student_id}</div>
+            </div>
+            <div class="att-btns">
+              <button onclick="setAttendance('${s.student_id}','PRESENT')"
+                class="${s.status === 'PRESENT' ? 'active-present' : ''}"
+                id="btn-p-${s.student_id}">✓ Present</button>
+              <button onclick="setAttendance('${s.student_id}','ABSENT')"
+                class="${s.status === 'ABSENT' ? 'active-absent' : ''}"
+                id="btn-a-${s.student_id}">✗ Absent</button>
+            </div>
+          </div>`).join('')}
+      </div>`;
+    }
+
+    function setAttendance(studentId, status) {
+      attStatuses[studentId] = status;
+      const pBtn = document.getElementById(`btn-p-${studentId}`);
+      const aBtn = document.getElementById(`btn-a-${studentId}`);
+      pBtn.className = status === 'PRESENT' ? 'active-present' : '';
+      aBtn.className = status === 'ABSENT' ? 'active-absent' : '';
+    }
+
+    async function saveAllAttendance() {
+      const eventId = document.getElementById('att-event-select').value;
+      if (!eventId) return;
+
+      const records = Object.entries(attStatuses)
+        .filter(([, s]) => s === 'PRESENT' || s === 'ABSENT')
+        .map(([student_id, status]) => ({ student_id, status }));
+
+      if (records.length === 0) { showToast('No attendance marked yet.', 'info'); return; }
+
+      const res = await apiFetch('mark_attendance.php', {
+        method: 'POST',
+        body: JSON.stringify({ event_id: eventId, records })
+      });
+
+      showToast(res.message || (res.success ? 'Attendance saved!' : 'Save failed.'),
+        res.success ? 'success' : 'error');
+    }
+
+    function openAttendanceForEvent(eventId, eventName) {
+      showSection('attendance');
+      setTimeout(async () => {
+        await loadEventSelectForAttendance();
+        document.getElementById('att-event-select').value = eventId;
+        loadAttendanceList();
+      }, 100);
+    }
+
+    // ============================================================
+    // REGISTRATIONS
+    // ============================================================
+    async function loadRegistrations() {
+      const tbody = document.getElementById('reg-tbody');
+
+      // Fetch all events, then for each get their attendance lists
+      const evRes = await apiFetch('events.php');
+      if (!evRes.success || !evRes.events?.length) {
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--text-muted)">No registrations</td></tr>`;
+        return;
+      }
+
+      const rows = [];
+      for (const ev of evRes.events.slice(0, 20)) { // limit for performance
+        const attRes = await apiFetch(`get_analytics.php?type=attendance_list&event_id=${ev.event_id}`);
+        const students = attRes.success ? (attRes.data?.attendance || []) : [];
+        students.forEach(s => {
+          rows.push(`
+          <tr>
+            <td><strong>${s.name}</strong><br>
+                <span style="font-size:12px;color:var(--text-muted)">${s.student_id}</span></td>
+            <td>${ev.name}</td>
+            <td>${formatDate(ev.date)}</td>
+            <td>${ev.venue || '—'}</td>
+            <td>
+              <span class="dot ${s.status === 'PRESENT' ? 'present' : s.status === 'ABSENT' ? 'absent' : 'nm'}"></span>
+              ${s.status || 'Not Marked'}
+            </td>
+          </tr>`);
+        });
+      }
+
+      tbody.innerHTML = rows.length
+        ? rows.join('')
+        : `<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--text-muted)">No registrations found</td></tr>`;
+    }
+async function loadStudentsForCoordinator() {
+  const sel = document.getElementById('coord-student');
+
+  const res = await apiFetch('students.php');
+
+  sel.innerHTML = '<option value="">Select Student</option>';
+
+  res.forEach(s => {
+    sel.innerHTML += `
+      <option 
+        value="${s.STUDENTID}" 
+        data-dept="${s.DEPARTMENTID}">
+        ${s.NAME} (${s.STUDENTID})
+      </option>
+    `;
+  });
+}
+async function addStudent() {
+  const name = document.getElementById('st-name').value;
+  const dept = document.getElementById('st-dept').value;
+  const year = document.getElementById('st-year').value;
+  const dob  = document.getElementById('st-dob').value;
+
+  const msg = document.getElementById('st-msg');
+
+  if (!name || !dept || !dob) {
+    msg.innerText = "Fill all fields";
+    return;
+  }
+
+  const res = await apiFetch('add_student.php', {
+    method: 'POST',
+    body: JSON.stringify({
+      name,
+      department_id: dept,
+      year,
+      dob
+    })
+  });
+
+  msg.innerText = res.message;
+}
+async function loadDepartments() {
+  const sel = document.getElementById('st-dept');
+
+  const res = await apiFetch('departments.php');
+
+  sel.innerHTML = '<option value="">Select Department</option>';
+
+  res.forEach(d => {
+    sel.innerHTML += `
+      <option value="${d.DEPARTMENTID}">
+        ${d.DEPARTMENTNAME}
+      </option>
+    `;
+  });
+}
+async function addCoordinator() {
+  const sel = document.getElementById('coord-student');
+  const studentId = sel.value;
+
+  const deptId = sel.options[sel.selectedIndex].getAttribute('data-dept');
+
+  const msg = document.getElementById('coord-msg');
+
+  if (!studentId) {
+    msg.style.color = 'red';
+    msg.textContent = 'Please select a student';
+    return;
+  }
+
+  const res = await apiFetch('add_coordinator.php', {
+    method: 'POST',
+    body: JSON.stringify({
+      student_id: studentId,
+      department_id: deptId,
+      admin_id: 'A001'
+    })
+  });
+
+  msg.style.color = res.success ? 'green' : 'red';
+  msg.textContent = res.message;
+}
+    // ============================================================
+    // ANALYTICS
+    // ============================================================
+    async function loadAnalytics() {
+      const res = await apiFetch('get_analytics.php?type=popular');
+      const tbody = document.getElementById('analytics-tbody');
+      const popular = res.success ? (res.data?.popular_events || []) : [];
+
+      if (!popular.length) {
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--text-muted)">No data</td></tr>`;
+        return;
+      }
+      tbody.innerHTML = popular.map((e, i) => `
+      <tr>
+        <td style="font-weight:700;color:var(--admin)">${i + 1}</td>
+        <td><strong>${e.event_name}</strong></td>
+        <td>${formatDate(e.date)}</td>
+        <td>${e.venue || '—'}</td>
+        <td>
+          <span style="font-weight:700;font-size:15px">${e.registrations}</span>
+          <div class="rating-bg" style="margin-top:4px;max-width:100px">
+            <div class="rating-fill"
+              style="width:${Math.round((e.registrations / popular[0].registrations) * 100)}%">
+            </div>
+          </div>
+        </td>
+      </tr>`).join('');
+    }
+
+    // ============================================================
+    // FEEDBACK
+    // ============================================================
+    async function loadFeedback() {
+      const res = await apiFetch('get_analytics.php?type=feedback');
+      const tbody = document.getElementById('feedback-tbody');
+      const rows = res.success ? (res.data?.feedback || []) : [];
+
+      if (!rows.length) {
+        tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;padding:24px;color:var(--text-muted)">No feedback yet</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = rows.map(r => {
+        const rating = parseFloat(r.avg_rating) || 0;
+        const stars = '★'.repeat(Math.round(rating)) + '☆'.repeat(5 - Math.round(rating));
+        return `
+        <tr>
+          <td><strong>${r.event_name}</strong></td>
+          <td>
+            <span style="font-weight:700;font-size:16px;color:var(--admin)">
+              ${rating ? rating.toFixed(1) : '—'}
+            </span>
+            <span style="color:#f59e0b;margin-left:6px;font-size:14px">${rating ? stars : ''}</span>
+          </td>
+          <td>${r.count || 0} review${r.count !== 1 ? 's' : ''}</td>
+          <td>
+            <div class="rating-bg" style="max-width:120px">
+              <div class="rating-fill" style="width:${Math.round((rating / 5) * 100)}%"></div>
+            </div>
+          </td>
+        </tr>`;
+      }).join('');
+    }
+    // ============================================================
+    // BUDGET USAGE
+    // ============================================================
+    async function loadBudget() {
+      const tbody = document.getElementById('budget-tbody');
+      tbody.innerHTML = `<tr><td colspan="6"><div class="loading-area"><div class="spinner"></div></div></td></tr>`;
+
+      const res = await apiFetch('get_budget.php');
+      if (!res.success) {
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--text-muted)">Failed to load budget data</td></tr>`;
+        return;
+      }
+
+      const d = res.data;
+      const fmt = v => '₹' + parseFloat(v || 0).toLocaleString('en-IN', { maximumFractionDigits: 0 });
+
+      // Update summary cards
+      document.getElementById('bud-total-alloc').textContent = fmt(d.total_allocated);
+      document.getElementById('bud-total-used').textContent = fmt(d.total_used);
+      const remEl = document.getElementById('bud-total-rem');
+      remEl.textContent = fmt(d.total_remaining);
+      remEl.style.color = d.total_remaining < 0 ? '#ef4444' : '';
+
+      // Populate expense event dropdown (reuse data)
+      const sel = document.getElementById('exp-event-select');
+      const prev = sel.value;
+      sel.innerHTML = '<option value="">— Select Event —</option>';
+      (d.budget_rows || []).forEach(r => {
+        const opt = document.createElement('option');
+        opt.value = r.event_id;
+        opt.textContent = r.event_name + ' (' + r.event_id + ')';
+        sel.appendChild(opt);
+      });
+      if (prev) sel.value = prev;
+
+      // Render table
+      const rows = d.budget_rows || [];
+      if (!rows.length) {
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--text-muted)">No events found</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = rows.map(r => {
+        const pct = parseFloat(r.usage_pct || 0);
+        const barW = Math.min(pct, 100);
+        const barCol = r.status === 'overspent' ? '#ef4444'
+          : r.status === 'warning' ? '#f59e0b'
+            : '#22c55e';
+        const badge = r.status === 'overspent'
+          ? `<span style="background:#ef444420;color:#ef4444;padding:3px 9px;border-radius:20px;font-size:12px;font-weight:600">⚠ Overspent</span>`
+          : r.status === 'warning'
+            ? `<span style="background:#f59e0b20;color:#f59e0b;padding:3px 9px;border-radius:20px;font-size:12px;font-weight:600">⚡ High Usage</span>`
+            : `<span style="background:#22c55e20;color:#22c55e;padding:3px 9px;border-radius:20px;font-size:12px;font-weight:600">✓ OK</span>`;
+        return `
+        <tr>
+          <td><strong>${r.event_name}</strong><br>
+              <span style="font-size:11px;color:var(--text-muted)">${r.event_id}</span></td>
+          <td>${fmt(r.budget_allocated)}</td>
+          <td style="font-weight:600">${fmt(r.budget_used)}</td>
+          <td style="color:${r.remaining < 0 ? '#ef4444' : 'inherit'}">${fmt(r.remaining)}</td>
+          <td>
+            <div style="display:flex;align-items:center;gap:8px">
+              <div style="flex:1;height:6px;border-radius:3px;background:var(--border);overflow:hidden;max-width:80px">
+                <div style="height:100%;width:${barW}%;background:${barCol};border-radius:3px"></div>
+              </div>
+              <span style="font-size:13px;font-weight:600;color:${barCol}">${pct.toFixed(1)}%</span>
+            </div>
+          </td>
+          <td>${badge}</td>
+        </tr>`;
+      }).join('');
+    }
+
+    // ---- Add Expense from Budget tab ----
+    async function submitExpense() {
+      const eventId = document.getElementById('exp-event-select').value;
+      const amount = document.getElementById('exp-amount').value.trim();
+      const resultEl = document.getElementById('exp-result');
+
+      resultEl.style.display = 'none';
+
+      if (!eventId) { showToast('Please select an event.', 'error'); return; }
+      if (!amount || isNaN(amount) || parseFloat(amount) <= 0) {
+        showToast('Please enter a valid amount.', 'error'); return;
+      }
+
+      const res = await apiFetch('add_expense.php', {
+        method: 'POST',
+        body: JSON.stringify({ event_id: eventId, amount: parseFloat(amount) })
+      });
+
+      if (res.success) {
+        showToast(res.message || 'Expense added!', 'success');
+        document.getElementById('exp-amount').value = '';
+
+        // Show live analytics returned from trigger
+        if (res.analytics) {
+          resultEl.style.display = 'block';
+          resultEl.style.color = '#22c55e';
+          resultEl.innerHTML = `
+          ✅ Trigger updated analytics —
+          Budget Efficiency: <strong>${res.analytics.budget_efficiency}%</strong> |
+          Success Score: <strong>${res.analytics.success_score}</strong>`;
+        }
+
+        // Refresh budget table
+        loadBudget();
+      } else {
+        showToast(res.message || 'Failed to add expense.', 'error');
+        // Show Oracle error detail if present
+        if (res.oracle_code) {
+          resultEl.style.display = 'block';
+          resultEl.style.color = '#ef4444';
+          resultEl.textContent = `Oracle Error ${res.oracle_code}: ${res.message}`;
+        }
+      }
+    }
+  </script>
+</body>
+
+</html>
